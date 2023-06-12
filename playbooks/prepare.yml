@@ -1,5 +1,13 @@
 ---
-- hosts: all
-  gather_facts: true
+- hosts: localhost
+  gather_facts: false
   roles:
-  - readConfig
+    - prepare
+
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - test_connection
+    - hostname
+    - host_map

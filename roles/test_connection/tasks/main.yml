@@ -1,0 +1,2 @@
+- name: test connection for hosts
+  shell: hostname -I 

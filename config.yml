@@ -1,0 +1,22 @@
+---
+hosts:
+  - ip: 172.16.0.1
+    role: 
+    - k8s-master
+    - etcd
+ #   hostname: k8s-master1
+  - ip: 172.16.0.2
+    role:
+    - k8s-master
+    - etcd
+    hostname: k8s-master2
+  - ip: 172.16.0.3
+    role:
+    - etcd
+    - k8s-node
+    hostname: k8s-node1
+
+
+ansible_user: "root"
+ansible_password: "ljw00000"
+ansible_port: 22  

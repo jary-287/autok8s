@@ -1,0 +1,24 @@
+- name: debug
+  debug: 
+    msg: "start read config"
+
+- name: add etcd host
+  add_host:
+    name: "{{ item.ip }}"
+    groups: "etcd"
+  loop: "{{ hosts }}"
+  when: '"etcd"  in  item.role'
+
+- name: add master host
+  add_host:
+    name: "{{ item.ip }}"
+    groups: "k8s-master"
+  loop: "{{ hosts }}"
+  when: '"k8s-master" in item.role'
+
+- name: add node host
+  add_host:
+    name: "{{ item.ip }}"
+    groups: "k8s-node"
+  loop: "{{ hosts }}"
+  when: '"k8s-node" in item.role'
