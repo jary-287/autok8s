@@ -16,6 +16,12 @@ git clone git@github.com:jary-287/autok8s.git
 cd autok8s
 # 修改config.yml
 cd playbooks
+wget https://dl.k8s.io/v1.21.11/kubernetes-server-linux-amd64.tar.gz -O roles/init_kubernetes/files/kubernetes-server-linux-amd64.tar.gz
+
+wget https://github.com/containerd/containerd/releases/download/v1.6.13/cri-containerd-cni-1.6.13-linux-amd64.tar.gz -O roles/init_kubernetes/files/cri-containerd-cni-1.6.13-linux-amd64.tar.gz
+
+wget https://dl.k8s.io/v1.21.14/kubernetes-node-linux-amd64.tar.gz -O roles/init_kubernetes/files/kubernetes-node-linux-amd64.tar.gz
+
 ansible-playbook deploy.yml   -e "@../config.yml"   -vv
 ```
 
