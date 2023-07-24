@@ -1,0 +1,14 @@
+{% for host in groups["etcd"] %}
+{% if host == inventory_hostname %}
+ETCD_NAME="etcd{{ loop.index }}"
+{% endif %}
+{% endfor %}
+ETCD_DATA_DIR="{{ ETCD_DATA_DIR }}"
+ETCD_LISTEN_PEER_URLS="https://{{ inventory_hostname}}:2380"
+ETCD_LISTEN_CLIENT_URLS="https://{{ inventory_hostname }}:2379,http://127.0.0.1:2379"
+#[Clustering]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="https://{{ inventory_hostname }}:2380"
+ETCD_ADVERTISE_CLIENT_URLS="https://{{ inventory_hostname }}:2379"
+ETCD_INITIAL_CLUSTER="{% for host in groups["etcd"] %}{% if loop.first %}etcd{{ loop.index }}=https://{{ host }}:2380{% else %},etcd{{ loop.index }}=https://{{ host }}:2380{% endif %}{% endfor %}"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_INITIAL_CLUSTER_STATE="new"

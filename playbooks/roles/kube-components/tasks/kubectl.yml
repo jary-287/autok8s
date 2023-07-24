@@ -1,0 +1,20 @@
+- name: make sure .kube exist
+  file:
+    name: ~/.kube
+    state: directory
+    
+
+- name: copy kubeconfig file to remote host
+  copy:
+    src: "{{ work_dir | default('/opt/autok8s') }}/ssl/kube.config"
+    dest: ~/.kube/config
+
+- name: export env
+  shell: export KUBECONFIG=~/.kube/config
+
+
+- name: copy kubectl to remote host
+  copy:
+    src: kubectl
+    dest: /usr/bin
+    mode: 0755

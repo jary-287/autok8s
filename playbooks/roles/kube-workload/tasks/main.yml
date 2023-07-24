@@ -1,0 +1,26 @@
+- name: deploy containerd
+  include_tasks: runc.yml
+
+
+- name: deploy kube node component
+  include_tasks: kubelet.yml 
+
+
+
+- name: wait kubelet bootstrap
+  shell: sleep 10;
+
+- name: get csr
+  shell: kubectl get csr | awk '/Pending/{ print $1 }'
+  register: csrs 
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+
+- name: approve csr
+  shell: "kubectl certificate approve {{ item }}"
+  with_items: "{{ csrs.stdout_lines }}"
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+
+- name: deploy kube-proxy
+  include_tasks: kube-proxy.yml
+    
+

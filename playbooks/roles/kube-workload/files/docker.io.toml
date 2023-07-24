@@ -1,0 +1,2 @@
+server = "https://docker.io" # 源镜像地址
+[host."https://docker.m.daocloud.io"] # 镜像加速地址

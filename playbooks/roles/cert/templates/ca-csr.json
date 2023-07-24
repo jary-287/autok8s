@@ -1,0 +1,17 @@
+{
+         "cn":"kubernetes",
+         "names":[
+             {
+                 "C":"CN",
+                 "ST":"GuangDong",
+                 "L":"GuangZhou",
+                 "O":"k8s",
+                 "OU":"CN"
+             }
+         ],
+         "key":{
+             "algo":"rsa",
+             "size":4096
+         },
+         "expire":"{{ EXPIRE_TIME }}"  
+}

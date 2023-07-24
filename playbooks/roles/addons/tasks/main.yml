@@ -1,0 +1,6 @@
+- name: deploy calico
+  include_tasks: calico.yml
+
+
+- name: deploy coredns
+  include_tasks: coredns.yml

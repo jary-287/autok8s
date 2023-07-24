@@ -1,0 +1,118 @@
+- name: copy certificate to remote host
+  copy:
+    src: "{{ work_dir }}/ssl/{{ item }}"
+    dest: "{{ K8S_SSL_DIR }}"
+    force: yes
+  with_items:
+    - "ca.pem"
+    - "ca-key.pem"
+    - "kube-apiserver.pem"
+    - "kube-apiserver-key.pem"
+    - "etcd.pem"
+    - "kube-controller-manager-key.pem"
+    - "kube-controller-manager.pem"
+    - "kube-scheduler-key.pem"
+    - "kube-scheduler.pem"
+    - "kube-proxy.pem"
+    - "kube-proxy-key.pem"
+
+- name: copy bootstrap token to remote host
+  copy:
+    src: "{{ work_dir }}/ssl/token.csv"
+    dest: "{{ K8S_CONF_DIR }}"
+    force: yes
+
+- name: copy kubectl to ssl work_dir
+  copy: 
+    src: kubectl
+    dest: "{{ work_dir }}/ssl"
+    mode: 0755
+
+
+- name: generate admin kube config
+  block:
+    - name: set kubectl kubeconfig
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-cluster kubernetes --server=https://{{ k8s_vip }}:{{ apiserver_listen_port }} --certificate-authority=ca.pem --embed-certs=true --kubeconfig=kube.config"
+    
+    - name: set admin user
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-credentials admin --client-certificate=admin.pem --embed-certs=true   --client-key=admin-key.pem --kubeconfig=kube.config"
+  
+    - name: set context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-context kubernetes --cluster=kubernetes --user=admin --kubeconfig=kube.config"
+
+    - name: set context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config use-context kubernetes --kubeconfig=kube.config"
+
+  delegate_to: localhost
+  run_once: yes
+
+
+- name: generate kubenetes components kube config
+  block:
+    - name: set  kubeconfig
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-cluster kubernetes --server=https://{{ k8s_vip }}:{{ apiserver_listen_port }} --certificate-authority=ca.pem --embed-certs=true --kubeconfig={{ item }}.kubeconfig"
+      with_items:
+        - kube-controller-manager
+        - kube-scheduler
+
+    - name: set  user
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-credentials system:{{ item }} --client-certificate={{ item }}.pem --embed-certs=true   --client-key={{ item }}-key.pem --kubeconfig={{ item }}.kubeconfig"
+      with_items:
+        - kube-controller-manager
+        - kube-scheduler
+
+    - name: set context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-context system:{{ item }} --cluster=kubernetes --user=system:{{ item }} --kubeconfig={{ item }}.kubeconfig"
+      with_items:
+        - kube-controller-manager
+        - kube-scheduler
+    
+    - name: use context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config use-context system:{{ item }} --kubeconfig={{ item }}.kubeconfig"
+      with_items:
+        - kube-controller-manager
+        - kube-scheduler
+  delegate_to: localhost
+  run_once: yes
+
+
+- name: generate kube-proxy  kube config
+  block:
+    - name: set kube-proxy kubeconfig
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-cluster kubernetes --server=https://{{ k8s_vip }}:{{ apiserver_listen_port }} --certificate-authority=ca.pem --embed-certs=true --kubeconfig=kube-proxy.kubeconfig"
+
+    - name: set kube-proxy user
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-credentials kube-proxy --client-certificate=kube-proxy.pem --embed-certs=true   --client-key=kube-proxy-key.pem --kubeconfig=kube-proxy.kubeconfig"
+
+    - name: set kube-proxy context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-context default --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig"
+    
+    - name: use kube-proxy context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig"
+
+  delegate_to: localhost
+  run_once: yes
+
+
+- name: get bootstrap token
+  shell: 'cat {{ K8S_CONF_DIR }}/token.csv | cut -d"," -f1'
+  register: bootstrap_token
+
+
+
+- name: generate kubelet kube config
+  block:
+    - name: set kubectl kubeconfig
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-cluster kubernetes --server=https://{{ k8s_vip }}:{{ apiserver_listen_port }} --certificate-authority=ca.pem --embed-certs=true --kubeconfig=kubelet-bootstrap.kubeconfig"
+
+    - name: set kubelet user
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-credentials kubelet-bootstrap  --token={{ bootstrap_token.stdout }}  --kubeconfig=kubelet-bootstrap.kubeconfig"
+
+    - name: set kubelet context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config set-context default --cluster=kubernetes --user=kubelet-bootstrap --kubeconfig=kubelet-bootstrap.kubeconfig"
+    
+    - name: use kubelet context
+      shell: "cd {{ work_dir }}/ssl && ./kubectl config use-context default --kubeconfig=kubelet-bootstrap.kubeconfig"
+
+  delegate_to: localhost
+  run_once: yes

@@ -1,0 +1,24 @@
+- name: copy calico.yml to remote host
+  template:
+    src: calico.yaml.j2
+    dest: "{{ work_dir }}/calico.yml"
+
+- name: get apiserver privilige
+  shell: kubectl get clusterRoleBinding -A | grep apiserver || echo 1
+  register: calico_privilege
+  
+- name: set apiserver privilige
+  shell: kubectl create clusterrolebinding kube-apiserver   --clusterrole=cluster-admin   --user=kube-apiserver
+  when: calico_privilege.stdout == "1"
+
+- name: apply yaml
+  shell: "kubectl apply -f {{ work_dir }}/calico.yml"
+
+
+- name: wait calico running
+  shell: kubectl get pod -A | grep calico | grep -v Running | wc -l  
+  register: calico_status
+  until: calico_status.stdout == "0"
+  retries: 10
+  delay: 20
+

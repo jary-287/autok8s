@@ -1,0 +1,49 @@
+{% set current_index = ansible_play_hosts.index(inventory_hostname) %}
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id NGINX_MASTER
+   vrrp_skip_check_adv_addr
+   # vrrp_strict    一定要注释掉
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_script check_nginx {
+    script "/etc/keepalived/check_service.sh"
+    interval 3
+    weight 10    # 权重变化
+    fall 2       # 脚本退出出非0两次判定失败
+    rise 2       # 脚本为0两次判定ok
+}
+
+
+vrrp_instance VI_1 {
+    {% if current_index == 0 %}
+    state MASTER
+    {% else %}
+    state BACKUP
+    {% endif %}
+    interface {{ if_name.stdout }}
+    virtual_router_id 51
+    priority {{ 100 - current_index }} 
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        {{ k8s_vip }}
+    }
+    track_script {
+    	check_nginx
+    }
+}

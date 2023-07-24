@@ -1,0 +1,19 @@
+- name: create ssh config dir
+  file:
+    path: ~/.ssh
+    state: directory
+    mode: 0700
+  
+- name: create authorized_keys
+  file:
+    path: ~/.ssh/authorized_keys
+    state: touch
+    mode: 0700
+
+
+- name: copy pub key to remote host
+  lineinfile:
+    line: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
+    path: ~/.ssh/authorized_keys
+    mode: '0600'
+    state: present

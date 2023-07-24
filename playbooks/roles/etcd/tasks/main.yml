@@ -1,0 +1,70 @@
+- name: copy binary file to etcd node
+  unarchive:
+    src: etcd-v3.5.0-linux-amd64.tar.gz
+    dest: "{{ work_dir | default('/opt/autok8s')}}"
+    remote_src: no
+
+- name: create etcd config directory
+  file:
+    path: "{{ ETCD_CONF_DIR }}"
+    state: directory
+
+- name: create etcd data directory
+  file:
+    path: "{{ ETCD_DATA_DIR }}"
+    state: directory
+
+
+- name: copy etcd to bin
+  shell: "cd {{ work_dir | default('/opt/autok8s')}}/etcd-v3.5.0-linux-amd64 && cp -u etcd* /usr/bin"
+
+
+- name: copy config to remote host
+  template:
+    src: etcd.conf.j2
+    dest: "{{ ETCD_CONF_DIR }}/etcd.conf"
+    force: yes
+
+- name: make etcd ssl directory
+  file:
+    path: "{{ ETCD_CONF_DIR }}/ssl"
+    state: directory
+
+- name: copy etcd ssl certificate to remote host
+  copy:
+    src: "{{ work_dir }}/ssl/etcd.pem"
+    dest: "{{ ETCD_CONF_DIR }}/ssl"
+    force: yes
+
+- name: copy etcd ssl certificate to remote host
+  copy:
+    src: "{{ work_dir }}/ssl/etcd-key.pem"
+    dest: "{{ ETCD_CONF_DIR }}/ssl"
+    force: yes
+
+
+- name: copy ca ssl certificate to remote host
+  copy:
+    src: "{{ work_dir }}/ssl/ca.pem"
+    dest: "{{ ETCD_CONF_DIR }}/ssl"
+    force: yes
+
+
+- name: copy service file to remote host
+  template:
+    src: etcd.service.j2
+    dest: /etc/systemd/system/etcd.service
+
+- name: start etcd service
+  service:
+    name: etcd.service
+    state: restarted
+    enabled: yes
+
+- name: check status 
+  shell: systemctl is-active etcd.service
+  register: etcd_status
+  retries: 5
+  delay: 5
+  until: " 'active' in etcd_status.stdout"
+

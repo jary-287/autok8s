@@ -1,0 +1,37 @@
+KUBE_APISERVER_OPTS="--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+   --anonymous-auth=false \
+   --bind-address={{ inventory_hostname}} \
+   --secure-port=6443 \
+   --advertise-address={{ inventory_hostname}} \
+   --insecure-port=0 \
+   --authorization-mode=Node,RBAC \
+   --runtime-config=api/all=true \
+   --enable-bootstrap-token-auth \
+   --service-cluster-ip-range=10.255.0.0/16 \
+   --token-auth-file={{ K8S_CONF_DIR }}/token.csv \
+   --service-node-port-range={{ SERVICE_PORT_RANGE }} \
+   --tls-cert-file={{ K8S_SSL_DIR }}/kube-apiserver.pem  \
+   --tls-private-key-file={{ K8S_SSL_DIR }}/kube-apiserver-key.pem \
+   --client-ca-file={{ K8S_SSL_DIR }}/ca.pem \
+   --kubelet-client-certificate={{ K8S_SSL_DIR }}/kube-apiserver.pem \
+   --kubelet-client-key={{ K8S_SSL_DIR }}/kube-apiserver-key.pem \
+   --service-account-key-file={{ K8S_SSL_DIR }}/ca-key.pem \
+   --service-account-signing-key-file={{ K8S_SSL_DIR }}/ca-key.pem  \
+   --service-account-issuer=https://kubernetes.default.svc.cluster.local \
+   --etcd-cafile={{ K8S_SSL_DIR }}/ca.pem \
+   --etcd-certfile=/etc/etcd/ssl/etcd.pem \
+   --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem \
+   --etcd-servers={% for host in groups["etcd"] %}https://{{ host }}:2379,{% endfor %} \
+   --enable-swagger-ui=true \
+   --allow-privileged=true \
+   --apiserver-count=2 \
+   --audit-log-maxage=30 \
+   --audit-log-maxbackup=3 \
+   --audit-log-maxsize=100 \
+   --audit-log-path=/var/log/kube-apiserver-audit.log \
+   --event-ttl=1h \
+   --alsologtostderr=true \
+   --logtostderr=false \
+   --log-dir={{ K8S_LOG_DIR }} \
+   --log-file={{ K8S_LOG_DIR }}/kube-apiserver.log \
+   --v=4"

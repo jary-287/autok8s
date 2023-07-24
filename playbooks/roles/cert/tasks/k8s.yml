@@ -1,0 +1,27 @@
+- name: copy kube-apiserver csr config
+  template:
+    src: "{{ item + '-csr.json.j2' }}"
+    dest: '{{ ssl_work_dir + "/" + item + "-csr.json" }}'
+    force: yes
+  with_items:
+    - kube-apiserver
+    - kube-scheduler
+    - kube-controller-manager
+    - admin 
+    - kube-proxy
+
+
+- name: generate  cert
+  shell: "cd {{ ssl_work_dir }} && {{ work_dir }}/cfssl gencert -ca=ca.pem -config=ca-config.json -ca-key=ca-key.pem -profile=kubernetes  {{ item }}-csr.json | {{ work_dir }}/cfssljson -bare {{ item }}"
+  with_items:
+    - kube-apiserver
+    - admin
+    - kube-scheduler
+    - kube-controller-manager
+    - kube-proxy
+
+
+- name: generate bootstrap token
+  shell: "cd {{ ssl_work_dir }} && echo $(head -c 16 /dev/urandom | od -An -t x | tr -d \" \"),kubelet-bootstrap,10001,\"system:kubelet-bootstrap\" > token.csv"
+
+

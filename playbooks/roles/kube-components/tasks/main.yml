@@ -1,0 +1,24 @@
+- name: deploy kube-apiserver 
+  include_tasks: kube-apiserver.yml
+
+
+- name: deploy kubectl
+  include_tasks: kubectl.yml
+
+
+
+
+- name: deploy kube-components
+  include_tasks: kube-component.yml
+  loop:
+    - kube-controller-manager 
+    - kube-scheduler 
+    
+
+
+- name: check component status 
+  shell: kubectl get cs | awk '/Unhealthy/{ print $0 }' | wc -l 
+  register: component_status 
+  until: component_status.stdout == '0'
+  retries: 1
+  delay: 1

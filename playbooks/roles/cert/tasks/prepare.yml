@@ -1,0 +1,34 @@
+- name: copy ssl tookit to work_dir
+  copy:
+    src: "{{ item }}"
+    dest: "{{ work_dir }}"
+    mode: 0755
+  with_items:
+    - cfssl
+    - cfssljson
+
+- name: make ssl directory
+  file: 
+    path: '{{ work_dir +  "/ssl" }}'
+    state: directory
+    mode: 0755
+
+- name: set ssl directory
+  set_fact:
+    ssl_work_dir: '{{ work_dir + "/ssl" }}'
+
+
+
+- name: copy config 
+  template:
+    src: "{{ item }}"
+    dest: "{{ ssl_work_dir | default('/opt/autok8s/ssl') }}"
+    force: yes
+  with_items:
+    - ca-csr.json
+    - ca-config.json
+  
+
+
+- name: generate ca cert
+  shell: "cd {{ ssl_work_dir }} && {{ work_dir }}/cfssl gencert -initca ca-csr.json | {{ work_dir }}/cfssljson -bare ca"

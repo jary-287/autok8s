@@ -1,0 +1,42 @@
+- name: replace runc 
+  copy:
+    src: runc.amd64
+    dest: "/usr/local/sbin/runc"
+    force: yes
+    mode: 0755
+  
+- name: create containerd conf directory
+  file:
+    path: /etc/containerd/certs.d
+    state: directory
+
+
+
+
+- name: copy containerd config to remote host
+  copy:
+    src: containerd.toml
+    dest: /etc/containerd/config.toml
+
+- name: create image accelerate config
+  file:
+    path: /etc/containerd/certs.d/docker.io
+    state: directory
+
+- name: copy docker.io image config 
+  copy: 
+    src: docker.io.toml
+    dest: /etc/containerd/certs.d/docker.io/hosts.toml
+
+- name: start containerd
+  service:
+    name: containerd
+    state: restarted
+    enabled: yes
+
+- name: wait containerd acrive
+  shell: systemctl is-active containerd
+  register: containerd_status 
+  until: containerd_status.stdout == "active"
+  retries: 5
+  delay: 2

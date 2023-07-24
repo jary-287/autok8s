@@ -1,0 +1,5 @@
+if systemctl is-active --quiet nginx.service; then
+    exit 0
+else
+    exit 1
+fi

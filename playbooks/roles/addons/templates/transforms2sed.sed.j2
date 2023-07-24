@@ -1,0 +1,6 @@
+s/__DNS__SERVER__/{{ DNS_SERVER_IP }}/g
+s/__DNS__DOMAIN__/cluster.local/g
+s#__CLUSTER_CIDR__#{{ POD_CIDR }}#g
+s/__DNS__MEMORY__LIMIT__/170Mi/g
+s#k8s.gcr.io/coredns/coredns:v1.8.0#registry.aliyuncs.com/google_containers/coredns:v1.8.0#g
+s/__MACHINE_GENERATED_WARNING__/Warning: This is a file generated from the base underscore template file: __SOURCE_FILENAME__/g

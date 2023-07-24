@@ -1,0 +1,58 @@
+- name: make sure wokr directory exist
+  file:
+    path: /var/lib/kubelet
+    state: directory
+
+- name: copy kubeconfig to remote host
+  copy:
+    src: "{{ work_dir | default('/opt/autok8s') }}/ssl/kubelet-bootstrap.kubeconfig"
+    dest: "{{ K8S_CONF_DIR }}"
+    force: yes
+  
+- name: copy kubelet config to  remote host
+  template:
+    src: kubelet.json.j2
+    dest: "{{ K8S_CONF_DIR }}/kubelet.json"
+    force: yes
+
+
+
+- name: delete kubelet old cert
+  shell: "rm -rf {{ K8S_SSL_DIR }}/kubelet*"
+
+  
+
+- name: copy kubelet service to  remote host
+  template:
+    src: kubelet.service.j2
+    dest: "/etc/systemd/system/kubelet.service"
+    force: yes
+
+
+- name: get kubelet cluseter rolebinding
+  shell: kubectl get clusterrolebinding | grep kubelet-bootstrap || echo 1
+  register: kubelet_role_binding
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  run_once: yes
+    
+    
+
+- name: create kubelet cluster rolebinding
+  shell: kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  run_once: yes
+  when: kubelet_role_binding.stdout == "1"
+
+
+- name: start kubelet service
+  service:
+    name: kubelet
+    state: restarted
+    enabled: yes
+
+- name: wait for kubelet service active
+  shell: systemctl is-active kubelet
+  register: kubelet_status 
+  until: kubelet_status.stdout == "active"
+  retries: 5
+  delay: 2

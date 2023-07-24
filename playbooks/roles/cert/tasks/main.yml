@@ -1,0 +1,16 @@
+
+- import_tasks: prepare.yml
+  delegate_to: localhost 
+
+# generate etcd cert
+- import_tasks: etcd.yml
+  delegate_to: localhost 
+
+# generate k8s cert
+- import_tasks: k8s.yml
+  delegate_to: localhost 
+
+
+# 分发证书，生成kubeconfig
+- name: prepare kubeconfig and distribete cert
+  include_tasks: distribute_conf.yml

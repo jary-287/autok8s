@@ -1,0 +1,126 @@
+# filewall and selinux 
+- name: disable selinux
+  selinux:
+    state: disabled
+    policy: targeted
+
+
+- name: disable selinux  
+  shell: setenforce 0
+  ignore_errors: yes
+
+- name: disable firewall
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+
+# time synchronization
+- name: install chrony
+  yum: 
+    name: chrony
+    state: present
+
+- name: enable chrony
+  systemd:
+    name: chronyd
+    state: started
+    enabled: yes
+
+- name: delete default config
+  shell: sed -i "/^server/d" /etc/chrony.conf
+
+
+- name: set chrony server
+  shell: echo {{ item }} >> /etc/chrony.conf
+  with_items:
+    - 'server time1.cloud.tencent.com iburst'
+    - 'server time2.cloud.tencent.com iburst'
+    - 'server time3.cloud.tencent.com iburst'
+    - 'server time4.cloud.tencent.com iburst'
+  notify: restart chrony
+
+
+
+
+- name: check source
+  shell: chronyc activity | awk '/online$/{ print $1}'
+  register: online_source
+  retries: 7
+  delay: 4
+  until: online_source.stdout | int > 0
+
+
+# swap setting
+- name: disable swap 
+  shell: "sed -i '/swap/d' /etc/fstab && swapoff -a"
+
+
+
+# ulimit setting
+
+- name: ulimt setting
+  shell: ulimit -SHn 65535
+
+- name: ulimt setting
+  pam_limits:
+    domain: root
+    limit_type: '-'
+    limit_item: nofile
+    value: 65535
+
+
+- name: ulimt setting
+  pam_limits:
+    domain: root
+    limit_type: '-'
+    limit_item: nproc
+    value: 65535
+
+
+# ipvs
+- name: install ipvsadm
+  yum:
+    name: ipvsadm
+    state: present
+
+
+- name: load ipvs mod
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ip_vs
+    - ip_vs_rr
+    - ip_vs_wrr
+    - ip_vs_sh
+    - nf_conntrack
+
+
+# load containerd mod
+- name: load containerd mod
+  modprobe:
+    name: "{{ item  }}"
+    state: present
+  with_items:
+    - overlay
+    - br_netfilter
+
+
+- name: ipvs mod config
+  template:
+    src: ipvs.conf
+    dest: /etc/modules-load.d/ipvs.conf
+
+- name: containerd mod config
+  template:
+    src: containerd.conf
+    dest: /etc/modules-load.d/containerd.conf
+
+
+- name: restart mod load service
+  systemd:
+    name: systemd-modules-load.service
+    state: restarted
+    enabled: yes

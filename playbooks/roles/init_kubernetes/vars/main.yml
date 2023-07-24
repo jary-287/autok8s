@@ -1,0 +1,3 @@
+K8S_CONF_DIR: "/etc/kubernetes"
+K8S_SSL_DIR: "/etc/kubernetes/ssl"
+K8S_LOG_DIR: "/var/log/kubernetes"

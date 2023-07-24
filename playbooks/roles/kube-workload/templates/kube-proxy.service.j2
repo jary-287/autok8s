@@ -1,0 +1,20 @@
+ [Unit]
+ Description=Kubernetes Kube-Proxy Server
+ Documentation=https://github.com/kubernetes/kubernetes
+ After=network.target
+
+ [Service]
+ WorkingDirectory=/var/lib/kube-proxy
+ ExecStart=/usr/local/bin/kube-proxy \
+   --config={{ K8S_CONF_DIR }}/kube-proxy.yaml \
+   --alsologtostderr=true \
+   --logtostderr=false \
+   --log-dir={{ K8S_LOG_DIR}} \
+   --log-file={{ K8S_LOG_DIR }}/kube-proxy.log \
+   --v=2
+ Restart=on-failure
+ RestartSec=5
+ LimitNOFILE=65536
+
+ [Install]
+ WantedBy=multi-user.target

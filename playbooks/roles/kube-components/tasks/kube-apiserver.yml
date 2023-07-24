@@ -1,0 +1,99 @@
+- name: copy apiserver start option to remote host
+  template:
+    src: kube-apiserver.conf.j2
+    dest: "{{ K8S_CONF_DIR }}/kube-apiserver.conf"
+    force: yes
+
+- name: copy apiserver service to remote host
+  template:
+    src: kube-apiserver.service.j2
+    dest: "/etc/systemd/system/kube-apiserver.service"
+
+
+- name: start apiserver service
+  service:
+    name: "kube-apiserver.service"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+
+
+- name: install epel-release
+  yum: 
+    name:
+      - epel-release
+    state: present
+
+- name: install nginx keepalived and nginx-mod-stream
+  yum:
+    name: 
+      - nginx
+      - keepalived
+      - nginx-mod-stream
+    state: present
+
+- name: start nginx 
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: copy nginx config to remote host
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+
+
+- name: reload nginx
+  shell: nginx -s reload
+
+
+
+- name: get net interface name 
+  shell: "ip addr show | awk '/inet {{ inventory_hostname  }}/ {print $NF}'"
+  register: if_name
+
+- name: copy keepalived config file to remote host
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+
+
+
+
+- name: copy service check script to remote host
+  template:
+    src: check_service.sh.j2
+    dest: /etc/keepalived/check_service.sh
+    mode: 0755
+    
+
+- name: set keepalived log
+  lineinfile:
+    line: local0.*/var/log/keepalived.log
+    state: present
+    path: /etc/rsyslog.conf
+
+
+- name: set keepalived log
+  shell: sed -i 's/KEEPALIVED_OPTIONS="-D"/KEEPALIVED_OPTIONS="-D -S 0"/' /etc/sysconfig/keepalived
+
+
+- name: restart rsyslog
+  service:
+    name: rsyslog
+    state: restarted
+
+- name: start keepalived
+  service:
+    name: keepalived
+    state: restarted
+    enabled: yes
+
+
+- name: wait keepalived active
+  shell: systemctl is-active keepalived
+  register: keepalived_status 
+  until: keepalived_status.stdout == "active"
+  retries: 5
+  delay: 2

@@ -20,3 +20,23 @@ hosts:
 ansible_user: "root"
 ansible_password: "ljw00000"
 ansible_port: 22  
+
+work_dir: /opt/autok8s
+k8s_vip: 172.16.0.100
+apiserver_listen_port: 16443
+
+# 文件在roles/init/files
+k8s_server_package: kubernetes-server-linux-amd64.tar.gz
+k8s_node_package: kubernetes-node-linux-amd64.tar.gz
+runc_package: cri-containerd-cni-1.6.13-linux-amd64.tar.gz
+
+
+# 
+K8S_CONF_DIR: "/etc/kubernetes"
+K8S_SSL_DIR: "/etc/kubernetes/ssl"
+K8S_LOG_DIR: "/var/log/kubernetes"
+
+# 
+cluster_cidr: 172.16.0.0/24
+POD_CIDR: 10.0.0.0/16
+DNS_SERVER_IP: 10.255.0.2

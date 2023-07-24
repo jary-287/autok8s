@@ -1,0 +1,53 @@
+- name: basic setting
+  include_tasks: environment.yml
+
+- name: mkdir work_dir
+  file:
+    path: "{{ work_dir | default('/opt/autok8s') }}"
+    state: directory
+
+
+
+- name: copy k8s file to remote host
+  copy:
+    src: "{{ item }}"
+    dest: "{{ work_dir | default('/opt/autok8s') }}"
+    remote_src: no
+  with_items:
+    - "{{ runc_package }}"
+    - "{{ k8s_node_package }}"
+    - "{{ k8s_server_package }}"
+
+
+
+- name: unarchive kubernetes packages
+  unarchive:
+    src: "{{ work_dir | default('/opt/autok8s') }}/{{ item  }}"
+    dest: "{{ work_dir | default('/opt/autok8s') }}"
+    remote_src: yes
+  with_items:
+    - "{{ k8s_server_package }}"
+    - "{{ k8s_node_package }}"
+    
+- name: unarchive containerd package
+  unarchive:
+    src: "{{ work_dir | default('/opt/autok8s') }}/{{ runc_package }}"
+    dest: /
+    remote_src: yes
+
+- name: copy server binary file to bin
+  shell: "cp -u {{ work_dir | default('/opt/autok8s') }}/kubernetes/server/bin/kube* /usr/local/bin"
+
+- name: copy node binary file to bin
+  shell: "cp -u {{ work_dir | default('/opt/autok8s') }}/kubernetes/node/bin/kube* /usr/local/bin"
+
+- name: make kubernetes ssl directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ K8S_CONF_DIR }}"
+    - "{{ K8S_SSL_DIR }}"
+    - "{{ K8S_LOG_DIR }}"
+
+ 

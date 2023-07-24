@@ -1,0 +1,25 @@
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
+
+# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+stream {
+      log_format   main   '$remote_addr $upstream_addr - [$time_local] $status $upstream_bytes_sent';
+      access_log /var/log/nginx/k8s-access.log main;
+      upstream k8s-apiserver {
+        {% for host in groups["k8s-master"] %}
+        server {{ host }}:6443; # 后端apiserver地址
+        {% endfor%}
+      }
+      server {
+        listen {{ apiserver_listen_port }};           # vip port
+        proxy_pass k8s-apiserver;
+      }
+}

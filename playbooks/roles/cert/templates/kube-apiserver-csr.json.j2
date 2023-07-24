@@ -1,0 +1,29 @@
+{
+   "CN": "kube-apiserver",
+   "key": {
+     "algo": "rsa",
+     "size": 2048
+   },
+   "names": [
+     {
+       "O": "k8s",
+       "OU": "CN"
+     }
+   ],
+   "hosts": [
+{% for host in groups["k8s-node"] %}
+         "{{ host }}",
+{% endfor %}
+
+{% for host in groups["k8s-master"] %}
+         "{{ host }}",
+{% endfor %}
+     "{{ k8s_vip }}",
+		 "10.255.0.1",
+		 "kubernetes",
+		 "kubernetes.default",
+		 "kubernetes.default.svc",
+		 "kubernetes.default.svc.cluster",
+		 "kubernetes.default.svc.cluster.local"
+   ]
+ }

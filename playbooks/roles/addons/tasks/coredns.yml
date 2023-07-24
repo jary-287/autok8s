@@ -1,0 +1,25 @@
+- name: copy sed file to remote_host
+  template: 
+    src: transforms2sed.sed.j2
+    dest: "{{ work_dir }}/trans.sed"
+
+- name: copy coredns yml to remote host
+  template:
+    src: coredns.yml
+    dest: "{{ work_dir }}/coredns-base.yml"
+
+- name: generate yml
+  shell: "cd {{ work_dir }} && sed -f trans.sed coredns-base.yml > coredns.yml"
+
+
+
+- name: apply yml
+  shell: "kubectl apply -f {{ work_dir }}/coredns.yml"
+
+
+- name: wait core dns running
+  shell: kubectl get pod -A | grep coredns | grep -v Running  | wc -l  
+  register: coredns_status  
+  until: coredns_status.stdout == "0"
+  retries: 10
+  delay: 20

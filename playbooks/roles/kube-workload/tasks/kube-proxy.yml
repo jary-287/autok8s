@@ -1,0 +1,35 @@
+- name: make sure kube-proxy work directory
+  file:
+    path: /var/lib/kube-proxy
+    state: directory
+
+- name: copy kubeconfig to remote host
+  copy:
+    src: "{{ work_dir | default('/opt/autok8s') }}/ssl/kube-proxy.kubeconfig"
+    dest: "{{ K8S_CONF_DIR }}"
+    force: yes
+  
+- name: copy kube-proxy config to  remote host
+  template:
+    src: kube-proxy.yaml.j2
+    dest: "{{ K8S_CONF_DIR }}/kube-proxy.yaml"
+    force: yes
+
+- name: copy kube-proxy service to  remote host
+  template:
+    src: kube-proxy.service.j2
+    dest: "/etc/systemd/system/kube-proxy.service"
+    force: yes
+
+- name: start kube-proxy service
+  service:
+    name: kube-proxy
+    state: restarted
+    enabled: yes
+
+- name: wait for kube-proxy service active
+  shell: systemctl is-active kube-proxy
+  register: kube_proxy_status 
+  until: kube_proxy_status.stdout == "active"
+  retries: 5
+  delay: 2

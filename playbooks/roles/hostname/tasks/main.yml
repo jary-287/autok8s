@@ -1,0 +1,23 @@
+- name: set defined hostname
+  hostname:  
+    name: "{{ item.hostname }}"
+  loop: "{{ hosts }}"
+  when: "item.hostname is defined and item.ip == inventory_hostname"
+
+- name: set etcd hostname
+  hostname:
+    name: "etcd-{{ item.ip.split('.')[-1] }}"
+  loop: "{{ hosts }}"
+  when: (item.hostname is not defined) and (item.ip == inventory_hostname and "etcd" in item.role)
+
+- name: set node hostname
+  hostname:
+    name: "k8s-node{{ item.ip.split('.')[-1] }}"
+  loop: "{{ hosts }}"
+  when: (item.hostname is not defined) and (item.ip == inventory_hostname and "k8s-node" in item.role)
+
+- name: set master hostname
+  hostname: 
+    name: "k8s-master{{ item.ip.split('.')[-1] }}"
+  loop: "{{ hosts }}"
+  when: (item.hostname is not defined) and (item.ip == inventory_hostname and "k8s-master" in item.role)

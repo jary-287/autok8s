@@ -1,0 +1,8 @@
+- name: copy config 
+  template:
+    src: "etcd-csr.json.j2"
+    dest: "{{ ssl_work_dir+'/etcd-csr.json' | default('/opt/autok8s/ssl/etcd-csr.json') }}"
+    force: yes
+
+- name: generate etcd cert
+  shell: "cd {{ ssl_work_dir }} && {{ work_dir }}/cfssl gencert -ca=ca.pem -config=ca-config.json -ca-key=ca-key.pem -profile=kubernetes  etcd-csr.json | {{ work_dir }}/cfssljson -bare etcd"

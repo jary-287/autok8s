@@ -1,0 +1,35 @@
+- name: copy {{ item }} config to remote host
+  template:
+    src: "{{ item }}.conf.j2"
+    dest: "{{ K8S_CONF_DIR }}/{{ item }}.conf"
+    force: yes
+
+
+- name: copy {{ item }} service to remote host 
+  template:
+    src: "{{ item }}.service.j2"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    force: yes
+
+- name: copy {{ item }} kubeconfig to remote host 
+  template:
+    src: "{{ work_dir | default('/opt/autok8s') }}/ssl/{{ item }}.kubeconfig"
+    dest: "{{ K8S_CONF_DIR }}"
+    force: yes
+
+
+- name: start {{ item }} service
+  service:
+    name: "{{ item }}.service"
+    state: restarted
+    enabled: yes
+
+
+- name: wait for {{ item }} service started
+  shell: "systemctl is-active {{ item }}.service"
+  register: service_status
+  retries: 5
+  delay: 2
+  until: service_status.stdout == "active"
+    
+

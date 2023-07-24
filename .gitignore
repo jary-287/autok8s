@@ -1,1 +1,2 @@
-roles/prepare/files/
+/root/autok8s/playbooks/roles/init_kubernetes/files/*.tar.gz
+playbooks/roles/init_kubernetes/files

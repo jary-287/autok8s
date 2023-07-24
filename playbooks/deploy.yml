@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - prepare
+
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - test_connection
+    - hostname
+    - host_map
+    - nopass
+    
+
+
+- hosts: k8s-master,k8s-node
+  roles:
+    - init_kubernetes
+
+
+- hosts: k8s-master,k8s-node
+  gather_facts: yes
+  roles:
+    - cert
+
+- hosts: etcd
+  gather_facts: yes
+  roles:
+    - etcd
+
+- hosts: k8s-master
+  roles:
+    - kube-components
+
+- hosts: k8s-master,k8s-node
+  roles:
+    - kube-workload
+
+
+- hosts: k8s-master[0]
+  roles:
+    - addons

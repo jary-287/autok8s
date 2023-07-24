@@ -1,0 +1,2 @@
+ETCD_DATA_DIR: "/opt/etcd/data"
+ETCD_CONF_DIR: "/etc/etcd"
